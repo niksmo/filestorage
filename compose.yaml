@@ -1,0 +1,24 @@
+name: file_storage
+
+networks:
+  net:
+    name: file_storage_net
+    driver: bridge
+
+volumes:
+  pg-data:
+    name: file_storage_pg-data
+
+services:
+  pg:
+    image: postgres:16
+    container_name: file_storage_pg
+    env_file: .env
+    ports:
+      - ${DB_HOST}:${DB_PORT}:5432
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    networks:
+      - net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready || exit 1" ]
