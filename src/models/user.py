@@ -17,8 +17,9 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(USERNAME_MAX_LENGTH),
                                           unique=True)
     password: Mapped[str] = mapped_column(String(PASSWORD_MAX_LENGTH))
-    active: Mapped[bool] = mapped_column(default=True)
-    # files = relationship('File', back_populates='user')
+
+    files = relationship('File', back_populates='user',
+                         collection_class=list, cascade='delete')
 
     @validates('username')
     def validate_username(self, _, username):
@@ -28,7 +29,4 @@ class User(Base):
         return username
 
     def __repr__(self):
-        return ('User(\n'
-                f'  id={self.id},\n'
-                f'  username={self.username},\n'
-                ')')
+        return f'User(id={self.id},username={self.username})'

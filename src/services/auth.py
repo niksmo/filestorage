@@ -60,6 +60,7 @@ class RepositoryAuth(RepositoryDB[UserModel, UserCreate, Any]):
         user_instance = await self.get(db, username=user.username)
         if not user_instance:
             raise HTTPException(status.HTTP_400_BAD_REQUEST)
+
         try:
             self._pwd_hasher.verify(user_instance.password, user.password)
         except Exception:
