@@ -13,3 +13,7 @@ FILE_PATH_MAX_LENGTH = 1024
 TAG_AUTH = 'Auth'
 TAG_FILES = 'Files'
 TAG_HEALTHCHECK = 'Healthcheck'
+
+COOKIE_AUTH_PATH = 'Authorization'
+SCOPE_AUTH_PATH = 'auth'
+SCOPE_USER_PATH = 'user'

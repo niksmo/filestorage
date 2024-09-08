@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from models.base import Base as BaseModel
 
+__all__ = ('RepositoryDB',)
+
 ModelType = TypeVar('ModelType', bound=BaseModel)
 CreateSchemaType = TypeVar('CreateSchemaType', bound=BaseSchema)
 UpdateSchemaType = TypeVar('UpdateSchemaType', bound=BaseSchema)

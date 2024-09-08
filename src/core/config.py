@@ -1,4 +1,5 @@
 from logging.config import dictConfig as logging_config
+from pathlib import Path
 from typing import Optional
 
 from pydantic import PostgresDsn
@@ -22,8 +23,10 @@ class AppSettings(BaseSettings):
     secret_key: str = 'stub'
     jwt_algorithm: str = 'stub'
     jwt_expires: int = 1000
+    media_root: Path = Path(__file__).parents[2] / 'media'
 
 
 logging_config(logger_config)
 
 app_settings = AppSettings()
+app_settings.media_root

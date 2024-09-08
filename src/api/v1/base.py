@@ -7,13 +7,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.depends import get_session
 from schemas.healthcheck import ServiceActiveTime
-from utils.constants import TAG_AUTH, TAG_HEALTHCHECK
+from utils.constants import TAG_AUTH, TAG_FILES, TAG_HEALTHCHECK
 from utils.make import make_json_response_example
 
 from .auth import auth_router
+from .files import files_router
 
 router_v1 = APIRouter()
 router_v1.include_router(auth_router, prefix='', tags=[TAG_AUTH])
+router_v1.include_router(files_router, prefix='/files', tags=[TAG_FILES])
 
 DatabaseType = Annotated[AsyncSession, Depends(get_session)]
 

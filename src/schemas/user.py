@@ -16,7 +16,3 @@ class UserBase(BaseSchema):
 
 class UserCreate(UserBase):
     pass
-
-
-class User(UserBase):
-    pass
