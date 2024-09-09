@@ -19,6 +19,7 @@ class FileUpload(FileBase):
 class FileCreate(FileBase):
     name: str
     size: int
+    url: str
     user_id: int
 
 

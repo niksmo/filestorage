@@ -37,7 +37,7 @@ async def upload_file(path: FormPathType,
 async def download_file(path: QueryPathType,
                         user: UserType):
     breakpoint()
-    # path is str but may be ID
+    # depends owner
     # check owner in service
     # get static path
     return {'path': path}

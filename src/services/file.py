@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Type
+from urllib.parse import urljoin
 
 from fastapi import UploadFile, status
 from fastapi.exceptions import HTTPException
@@ -28,16 +29,17 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
     def _get_path_and_filename(self,
                                raw_path: str,
                                file: UploadFile) -> tuple[str, Path]:
-        path = Path(f'/{raw_path}')
+        path = Path(raw_path)
+        if path.is_absolute():
+            path = Path(str(path)[1:])
         filename = raw_path.rsplit('/', maxsplit=1)[-1]
         if not filename:
             filename = file.filename if file.filename else 'file'
-            path = path.with_name(filename)
+            path = path / filename
         return filename, path
 
-    async def _get_upload_path(self, path: Path, user: UserModel) -> Path:
-        return app_settings.media_root.joinpath(user.media_id,
-                                                str(path).removeprefix('/'))
+    def _get_upload_path(self, path: Path, user: UserModel) -> Path:
+        return app_settings.media_root.joinpath(user.media_id, path)
 
     async def _create_dirs(self, upload_path: Path) -> None:
         path_dir = upload_path.parent
@@ -53,7 +55,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
                      file: UploadFile,
                      user: UserModel) -> FileModel:
         filename, path = self._get_path_and_filename(raw_path, file)
-        upload_path = await self._get_upload_path(path, user)
+        upload_path = self._get_upload_path(path, user)
 
         if await aiofiles_exists(upload_path):
             raise HTTPException(status.HTTP_409_CONFLICT)
@@ -69,9 +71,13 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
         finally:
             await file.close()
 
+        file_url = urljoin(app_settings.media_url, str(
+            upload_path.relative_to(app_settings.media_root)))
+
         return await self.create(
             db,
-            obj_in=FileCreate(path=str(path),
+            obj_in=FileCreate(path=f'/{str(path)}',
+                              url=file_url,
                               name=filename,
                               size=file.size if file.size else 0,
                               user_id=user.id)

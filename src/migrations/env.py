@@ -1,5 +1,4 @@
 import asyncio
-from logging import getLogger
 from logging.config import fileConfig
 
 from sqlalchemy import pool
@@ -10,19 +9,12 @@ from alembic import context
 from models import Base
 from core import app_settings
 
-logger = getLogger('common')
-
 config = context.config
 
 if config.config_file_name:
     fileConfig(config.config_file_name)
 
-if app_settings.db_dsn:
-    config.set_main_option(
-        'sqlalchemy.url', app_settings.db_dsn.unicode_string()
-    )
-else:
-    logger.critical('DB_DSN not set. Check .env variable.')
+config.set_main_option('sqlalchemy.url', app_settings.db_dsn)
 
 target_metadata = Base.metadata
 
