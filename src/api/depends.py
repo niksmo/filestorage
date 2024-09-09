@@ -1,13 +1,12 @@
 from collections.abc import AsyncGenerator
-from typing import Annotated, NewType
+from typing import Annotated
 
 from fastapi import Depends, Request, status
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import async_session
-
-UserId = NewType('UserId', int)
+from models.user import User as UserModel
 
 
 async def get_session() -> AsyncGenerator[AsyncSession]:
@@ -15,11 +14,11 @@ async def get_session() -> AsyncGenerator[AsyncSession]:
         yield session
 
 
-def verify_auth(request: Request) -> UserId:
+def verify_auth(request: Request) -> UserModel:
     if not request.auth:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED)
     return request.user
 
 
-UserIdType = Annotated[UserId, Depends(verify_auth)]
+UserType = Annotated[UserModel, Depends(verify_auth)]
 DatabaseType = Annotated[AsyncSession, Depends(get_session)]

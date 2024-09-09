@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, UploadFile, status
 
-from api.depends import UserIdType, DatabaseType
+from api.depends import UserType, DatabaseType
 from schemas.file import File as FileSchema, UserFiles
 from services.file import file_crud
 from utils.constants import FILE_PATH_MAX_LENGTH, FILE_PATH_MIN_LENGTH
@@ -19,8 +19,8 @@ QueryPathType = Annotated[str, Query(min_length=FILE_PATH_MIN_LENGTH,
 @files_router.get('',
                   status_code=status.HTTP_200_OK,
                   response_model=UserFiles)
-async def user_files(user_id: UserIdType, db: DatabaseType):
-    return await file_crud.user_files(db, user_id=user_id)
+async def user_files(user: UserType):
+    return await file_crud.user_files(user=user)
 
 
 @files_router.post('/upload',
@@ -28,19 +28,14 @@ async def user_files(user_id: UserIdType, db: DatabaseType):
                    response_model=FileSchema)
 async def upload_file(path: FormPathType,
                       file: Annotated[UploadFile, File()],
-                      user_id: UserIdType,
+                      user: UserType,
                       db: DatabaseType):
-    return await file_crud.upload(
-        db,
-        raw_path=path,
-        file=file,
-        user_id=user_id
-    )
+    return await file_crud.upload(db, raw_path=path, file=file, user=user)
 
 
 @files_router.get('/download')
 async def download_file(path: QueryPathType,
-                        user_id: UserIdType):
+                        user: UserType):
     breakpoint()
     # path is str but may be ID
     # check owner in service

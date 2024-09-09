@@ -13,6 +13,7 @@ class File(Base):
     path: Mapped[str] = mapped_column(
         String(FILE_PATH_MAX_LENGTH), unique=True
     )
+    url: Mapped[str] = mapped_column()
     size: Mapped[int] = mapped_column()
     user_id: Mapped[int] = mapped_column(
         ForeignKey('user.id', ondelete='CASCADE')

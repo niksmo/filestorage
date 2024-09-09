@@ -1,5 +1,4 @@
 from datetime import datetime
-from collections.abc import Sequence
 
 from pydantic import BaseModel as BaseSchema, Field
 
