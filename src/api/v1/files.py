@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, UploadFile, status
+from fastapi.responses import RedirectResponse
 
 from api.depends import UserType, DatabaseType
 from schemas.file import File as FileSchema, UserFiles
@@ -33,11 +34,11 @@ async def upload_file(path: FormPathType,
     return await file_crud.upload(db, raw_path=path, file=file, user=user)
 
 
-@files_router.get('/download')
+@files_router.get('/download', response_class=RedirectResponse)
 async def download_file(path: QueryPathType,
                         user: UserType):
     breakpoint()
     # depends owner
     # check owner in service
     # get static path
-    return {'path': path}
+    return RedirectResponse(url='', status_code=status.HTTP_302_FOUND)
