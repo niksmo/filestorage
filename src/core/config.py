@@ -29,4 +29,6 @@ class AppSettings(BaseSettings):
 logging_config(logger_config)
 
 app_settings = AppSettings()
-app_settings.media_root
+
+if not app_settings.media_root.exists():
+    app_settings.media_root.mkdir()

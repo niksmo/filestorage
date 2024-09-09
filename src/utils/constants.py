@@ -17,3 +17,5 @@ TAG_HEALTHCHECK = 'Healthcheck'
 COOKIE_AUTH_PATH = 'Authorization'
 SCOPE_AUTH_PATH = 'auth'
 SCOPE_USER_PATH = 'user'
+
+CHUNK_1MB = 1024 * 1024

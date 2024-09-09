@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Generic, NoReturn, Optional, Type, TypeVar
 
 from pydantic import BaseModel as BaseSchema
@@ -39,7 +40,13 @@ class RepositoryDB(
 
     async def get(self, db: AsyncSession,
                   **kwargs) -> Optional[ModelType]:
-        return await db.scalar(select(self._model).filter_by(**kwargs))
+        stmt = select(self._model).filter_by(**kwargs)
+        return await db.scalar(stmt)
+
+    async def get_multi(self, db: AsyncSession,
+                        **kwargs) -> Sequence[ModelType]:
+        stmt = select(self._model).filter_by(**kwargs)
+        return (await db.scalars(stmt)).all()
 
     async def create(self, db: AsyncSession, *,
                      obj_in: CreateSchemaType) -> ModelType:
