@@ -13,8 +13,9 @@ files_router = APIRouter()
 FormPathType = Annotated[str, Form(min_length=FILE_PATH_MIN_LENGTH,
                                    max_length=FILE_PATH_MAX_LENGTH)]
 
-QueryPathType = Annotated[str, Query(min_length=FILE_PATH_MIN_LENGTH,
-                                     max_length=FILE_PATH_MAX_LENGTH)]
+QueryPathOrIdType = Annotated[str, Query(alias='path',
+                                         min_length=FILE_PATH_MIN_LENGTH,
+                                         max_length=FILE_PATH_MAX_LENGTH)]
 
 
 @files_router.get('',
@@ -35,10 +36,10 @@ async def upload_file(path: FormPathType,
 
 
 @files_router.get('/download', response_class=RedirectResponse)
-async def download_file(path: QueryPathType,
-                        user: UserType):
-    breakpoint()
-    # depends owner
-    # check owner in service
-    # get static path
-    return RedirectResponse(url='', status_code=status.HTTP_302_FOUND)
+async def download_file(path_or_id: QueryPathOrIdType,
+                        user: UserType,
+                        db: DatabaseType):
+
+    return RedirectResponse(
+        url=await file_crud.download(db, path_or_id=path_or_id, user=user),
+        status_code=status.HTTP_302_FOUND)

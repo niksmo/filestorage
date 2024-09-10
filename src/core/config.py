@@ -1,9 +1,12 @@
+from logging import getLogger
 from logging.config import dictConfig as logging_config
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from utils.constants import MEDIA_ROOT_NAME
+from utils.constants import COMMON_LOGGER, MEDIA_ROOT_NAME
 from .logger import logger_config
+
+logger = getLogger(COMMON_LOGGER)
 
 
 class AppSettings(BaseSettings):
@@ -27,3 +30,4 @@ app_settings = AppSettings()
 
 if not app_settings.media_root.exists():
     app_settings.media_root.mkdir()
+    logger.info(f'Create media path: {app_settings.media_root}')

@@ -13,17 +13,13 @@ from core import app_settings
 from models.file import File as FileModel
 from models.user import User as UserModel
 from schemas.file import File, FileCreate, UserFiles
-from services.user import RepositoryUser, crud_user
 from utils.constants import CHUNK_1MB
 from .base import RepositoryDB
 
 
 class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
 
-    def __init__(self,
-                 model: Type[FileModel],
-                 crud_user: RepositoryUser) -> None:
-        self._crud_user = crud_user
+    def __init__(self, model: Type[FileModel]) -> None:
         super().__init__(model)
 
     def _get_path_and_filename(self,
@@ -83,8 +79,24 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
                               user_id=user.id)
         )
 
-    async def download(self, db: AsyncSession, *, foo):
-        pass
+    async def download(self, db: AsyncSession, *,
+                       path_or_id: str,
+                       user: UserModel) -> str:
+        path = Path(path_or_id)
+        if not path.is_absolute():
+            path = f'/{path}'
+        else:
+            path = str(path)
+
+        file_obj = await self.get(db, path=path, user_id=user.id)
+
+        if not file_obj and path_or_id.isnumeric():
+            file_obj = await self.get(db, id=int(path_or_id), user_id=user.id)
+
+        if not file_obj:
+            raise HTTPException(status.HTTP_404_NOT_FOUND)
+
+        return file_obj.url
 
 
-file_crud = RepositoryFile(FileModel, crud_user)
+file_crud = RepositoryFile(FileModel)
