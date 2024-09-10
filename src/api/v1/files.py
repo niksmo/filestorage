@@ -21,8 +21,9 @@ QueryPathOrIdType = Annotated[str, Query(alias='path',
 @files_router.get('',
                   status_code=status.HTTP_200_OK,
                   response_model=UserFiles)
-async def user_files(user: UserType):
-    return await file_crud.user_files(user=user)
+async def user_files(user: UserType,
+                     db: DatabaseType):
+    return await file_crud.user_files(db, user=user)
 
 
 @files_router.post('/upload',

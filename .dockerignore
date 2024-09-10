@@ -1,9 +1,9 @@
 .dockerignore
 dockerization
 compose.yaml
+compose.production.yaml
 media
 venv
-.env
 .env.example
 .git
 .gitignore

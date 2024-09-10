@@ -1,8 +1,11 @@
 name: file_storage
 
 networks:
-  net:
-    name: file_storage_net
+  net-gateway:
+    name: file_storage_gateway
+    driver: bridge
+  net-pg:
+    name: file_storage_pg
     driver: bridge
 
 volumes:
@@ -19,11 +22,14 @@ services:
       dockerfile: ./dockerization/dockerfile.gateway
       args:
         NGINX_VERSION: 1.27.1
-    env_file: .env.production
+    volumes:
+      - media:/var/www/media
     ports:
-      - ${BACKEND_HOST}:${BACKEND_PORT}:80
+      - ${GATEWAY_HOST}:${GATEWAY_PORT}:80
     networks:
-      - net
+      - net-gateway
+    depends_on:
+      - api
 
   api:
     container_name: file_storage_api
@@ -36,7 +42,8 @@ services:
     volumes:
       - media:/app/media
     networks:
-      - net
+      - net-gateway
+      - net-pg
     depends_on:
       - pg
 
@@ -47,6 +54,6 @@ services:
     volumes:
       - pg-data:/var/lib/postgresql/data
     networks:
-      - net
+      - net-pg
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready || exit 1" ]

@@ -12,8 +12,6 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 COPY alembic.ini .
 
-COPY requirements.txt .
-
 COPY src src
 
 EXPOSE 8000

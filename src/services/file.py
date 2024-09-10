@@ -41,9 +41,10 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
         path_dir = upload_path.parent
         await aiofiles_makedirs(str(path_dir), exist_ok=True)
 
-    async def user_files(self, *,
+    async def user_files(self, db: AsyncSession, *,
                          user: UserModel) -> UserFiles:
-        files: list[File] = await user.awaitable_attrs.files
+        results = await self.get_multi(db, user_id=user.id)
+        files = [File.model_validate(result) for result in results]
         return UserFiles(account_id=user.id, files=files)
 
     async def upload(self, db: AsyncSession, *,
