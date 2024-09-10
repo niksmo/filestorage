@@ -1,0 +1,52 @@
+name: file_storage
+
+networks:
+  net:
+    name: file_storage_net
+    driver: bridge
+
+volumes:
+  pg-data:
+    name: file_storage_pg-data
+  media:
+    name: file_storage_media
+
+services:
+  gateway:
+    container_name: file_storage_gateway
+    build:
+      context: .
+      dockerfile: ./dockerization/dockerfile.gateway
+      args:
+        NGINX_VERSION: 1.27.1
+    env_file: .env.production
+    ports:
+      - ${BACKEND_HOST}:${BACKEND_PORT}:80
+    networks:
+      - net
+
+  api:
+    container_name: file_storage_api
+    build:
+      context: .
+      dockerfile: ./dockerization/dockerfile.api
+      args:
+        PYTHON_VERSION: 3.9.20-alpine
+    env_file: .env.production
+    volumes:
+      - media:/app/media
+    networks:
+      - net
+    depends_on:
+      - pg
+
+  pg:
+    image: postgres:16
+    container_name: file_storage_pg
+    env_file: .env.production
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    networks:
+      - net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready || exit 1" ]

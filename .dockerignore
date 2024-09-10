@@ -1,0 +1,14 @@
+.dockerignore
+dockerization
+compose.yaml
+media
+venv
+.env
+.env.example
+.git
+.gitignore
+.idea/
+.vscode
+__pycache__/
+*.pyc
+README.md

@@ -26,8 +26,8 @@ app.include_router(router_v1, prefix='/api/v1')
 
 if __name__ == '__main__':
     uvicorn_run('main:app',
-                host=app_settings.backend_host,
-                port=app_settings.backend_port,
+                host='0.0.0.0',
+                port=8000,
                 log_config=logger_config,
                 reload=True,
                 reload_dirs=['src'])

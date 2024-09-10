@@ -19,8 +19,6 @@ class AppSettings(BaseSettings):
     jwt_expires: int = 1000
     media_root: Path = Path(__file__).parents[2] / MEDIA_ROOT_NAME
     db_dsn: str = 'stub'
-    backend_host: str = '127.0.0.1'
-    backend_port: int = 8000
     media_url: str = 'http://127.0.0.1:3000/media/'
 
 
