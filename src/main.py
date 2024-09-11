@@ -4,7 +4,6 @@ from uvicorn import run as uvicorn_run
 
 from api import router_v1
 from core import app_settings, logger_config
-from middlewares import bearer_authorization
 from utils.constants import TAG_AUTH, TAG_FILES, TAG_HEALTHCHECK
 
 
@@ -21,7 +20,6 @@ app = FastAPI(
     ]
 )
 
-app.middleware('http')(bearer_authorization)
 
 app.include_router(router_v1, prefix='/api/v1')
 
@@ -31,4 +29,5 @@ if __name__ == '__main__':
                 port=8000,
                 log_config=logger_config,
                 reload=True,
-                reload_dirs=['src'])
+                reload_dirs=['src'],
+                server_header=False)

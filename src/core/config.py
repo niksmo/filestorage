@@ -10,12 +10,12 @@ from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi_cache import FastAPICache, Coder
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.key_builder import default_key_builder
+from fastapi_cache.key_builder import default_key_builder as cache_key_builder
 import orjson
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from redis.asyncio import from_url as aioredis_from_url
 
-from utils.constants import COMMON_LOGGER, MEDIA_ROOT_NAME
+from utils.constants import COMMON_LOGGER, COOKIE_AUTH_PATH, MEDIA_ROOT_NAME
 from .logger import logger_config
 
 logger = getLogger(COMMON_LOGGER)
@@ -29,9 +29,11 @@ def key_builder_wrapper(func):
         return repr(req_arg_value)
 
     def decorator(*args, **kwargs):
-        kwargs['kwargs'] = {key: get_repr(value) for key,
-                            value in kwargs['kwargs'].items()}
-        return func(*args, **kwargs)
+        kwargs['kwargs'] = {key: get_repr(value)
+                            for key, value in kwargs['kwargs'].items()}
+        prefix = kwargs["request"].cookies.get(COOKIE_AUTH_PATH, "")
+        return f'{prefix}_{func(*args, **kwargs)}'
+
     return decorator
 
 
@@ -60,7 +62,7 @@ class AppSettings(BaseSettings):
     media_root: Path = Path(__file__).parents[2] / MEDIA_ROOT_NAME
     db_dsn: str = 'stub'
     cache_dsn: str = 'stub'
-    media_url: str = 'http://127.0.0.1:3000/media/'
+    media_url: str = 'stub'
 
     @asynccontextmanager
     async def app_lifespan(self, _: FastAPI) -> AsyncGenerator:
@@ -68,7 +70,7 @@ class AppSettings(BaseSettings):
         FastAPICache.init(
             RedisBackend(redis_conn),
             coder=ORJsonCoder,
-            key_builder=key_builder_wrapper(default_key_builder)
+            key_builder=key_builder_wrapper(cache_key_builder)
         )
         yield
         await redis_conn.close()

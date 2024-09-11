@@ -43,9 +43,9 @@ async def service_active_time(db: DatabaseType):
     else:
         db_uptime = int(result.one().total_seconds())
 
-    redis_backend: RedisBackend = FastAPICache.get_backend()
+    redis_backend: RedisBackend = FastAPICache.get_backend()  # type: ignore
     try:
-        info = await redis_backend.redis.info()
+        info = await redis_backend.redis.info()  # type: ignore
     except Exception:
         cache_uptime = UNAVAILABLE
     else:

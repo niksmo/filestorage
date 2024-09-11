@@ -13,13 +13,17 @@ from core import app_settings
 from models.file import File as FileModel
 from schemas.file import File, FileCreate, UserFiles
 from schemas.user import UserDB
+from services.user import RepositoryUser, crud_user
 from utils.constants import CHUNK_1MB
 from .base import RepositoryDB
 
 
 class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
 
-    def __init__(self, model: Type[FileModel]) -> None:
+    def __init__(self,
+                 model: Type[FileModel],
+                 crud_user: RepositoryUser) -> None:
+        self._crud_user = crud_user
         super().__init__(model)
 
     def _get_path_and_filename(self,
@@ -42,17 +46,21 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
         await aiofiles_makedirs(str(path_dir), exist_ok=True)
 
     async def user_files(self, db: AsyncSession, *,
-                         user: UserDB) -> UserFiles:
-        results = await self.get_multi(db, user_id=user.id)
+                         user_id: int) -> UserFiles:
+        results = await self.get_multi(db, user_id=user_id)
         files = [File.model_validate(result) for result in results]
-        return UserFiles(account_id=user.id, files=files)
+        return UserFiles(account_id=user_id, files=files)
 
     async def upload(self, db: AsyncSession, *,
                      raw_path: str,
                      file: UploadFile,
-                     user: UserDB) -> FileModel:
+                     user_id: int) -> FileModel:
         filename, path = self._get_path_and_filename(raw_path, file)
-        upload_path = self._get_upload_path(path, user)
+        user = await self._crud_user.get(db, id=user_id)
+        if not user:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED)
+
+        upload_path = self._get_upload_path(path, UserDB.model_validate(user))
 
         if await aiofiles_exists(upload_path):
             raise HTTPException(status.HTTP_409_CONFLICT)
@@ -77,22 +85,22 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
                               url=file_url,
                               name=filename,
                               size=file.size if file.size else 0,
-                              user_id=user.id)
+                              user_id=user_id)
         )
 
     async def download(self, db: AsyncSession, *,
                        path_or_id: str,
-                       user: UserDB) -> str:
+                       user_id: int) -> str:
         path = Path(path_or_id)
         if not path.is_absolute():
             path = f'/{path}'
         else:
             path = str(path)
 
-        file_obj = await self.get(db, path=path, user_id=user.id)
+        file_obj = await self.get(db, path=path, user_id=user_id)
 
         if not file_obj and path_or_id.isnumeric():
-            file_obj = await self.get(db, id=int(path_or_id), user_id=user.id)
+            file_obj = await self.get(db, id=int(path_or_id), user_id=user_id)
 
         if not file_obj:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
@@ -100,4 +108,4 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
         return file_obj.url
 
 
-file_crud = RepositoryFile(FileModel)
+file_crud = RepositoryFile(FileModel, crud_user)

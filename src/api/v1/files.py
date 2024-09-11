@@ -4,10 +4,11 @@ from fastapi import APIRouter, File, Form, Query, UploadFile, status
 from fastapi.responses import RedirectResponse
 from fastapi_cache.decorator import cache
 
-from api.depends import UserType, DatabaseType
+from api.depends import AuthUserIdType, DatabaseType
 from schemas.file import File as FileSchema, UserFiles
 from services.file import file_crud
-from utils.constants import FILE_PATH_MAX_LENGTH, FILE_PATH_MIN_LENGTH
+from utils.constants import (CACHE_60_S, FILE_PATH_MAX_LENGTH,
+                             FILE_PATH_MIN_LENGTH)
 
 files_router = APIRouter()
 
@@ -22,9 +23,9 @@ QueryPathOrIdType = Annotated[str, Query(alias='path',
 @files_router.get('',
                   status_code=status.HTTP_200_OK,
                   response_model=UserFiles)
-@cache(expire=60)
-async def user_files(user: UserType, db: DatabaseType):
-    return await file_crud.user_files(db, user=user)
+@cache(expire=CACHE_60_S)
+async def user_files(user_id: AuthUserIdType, db: DatabaseType):
+    return await file_crud.user_files(db, user_id=user_id)
 
 
 @files_router.post('/upload',
@@ -32,17 +33,22 @@ async def user_files(user: UserType, db: DatabaseType):
                    response_model=FileSchema)
 async def upload_file(path: FormPathType,
                       file: Annotated[UploadFile, File()],
-                      user: UserType,
+                      user_id: AuthUserIdType,
                       db: DatabaseType):
-    return await file_crud.upload(db, raw_path=path, file=file, user=user)
+    return await file_crud.upload(db,
+                                  raw_path=path,
+                                  file=file,
+                                  user_id=user_id)
 
 
 @files_router.get('/download', response_class=RedirectResponse)
-@cache(expire=60)
+@cache(expire=CACHE_60_S)
 async def download_file(path_or_id: QueryPathOrIdType,
-                        user: UserType,
+                        user_id: AuthUserIdType,
                         db: DatabaseType):
-
     return RedirectResponse(
-        url=await file_crud.download(db, path_or_id=path_or_id, user=user),
-        status_code=status.HTTP_302_FOUND)
+        url=await file_crud.download(
+            db, path_or_id=path_or_id, user_id=user_id
+        ),
+        status_code=status.HTTP_302_FOUND
+    )
