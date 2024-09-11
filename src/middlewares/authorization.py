@@ -2,11 +2,17 @@ from collections.abc import Awaitable, Callable
 
 from jwt import decode as jwt_decode
 from fastapi import Request, Response
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import async_session
 from core import app_settings
 from services.user import crud_user
+from schemas.user import UserDB
 from utils.constants import COOKIE_AUTH_PATH, SCOPE_AUTH_PATH, SCOPE_USER_PATH
+
+
+async def get_user_by_jwt_data(db: AsyncSession, id: int) -> UserDB:
+    return UserDB.model_validate(await crud_user.get(db, id=id))
 
 
 async def bearer_authorization(
@@ -27,9 +33,9 @@ async def bearer_authorization(
             return await call_next(request)
 
         async with async_session.begin() as db:
-            user_obj = await crud_user.get(db, id=jwt_data['sub'])
-            if user_obj:
+            user = await get_user_by_jwt_data(db, jwt_data['sub'])
+            if user:
                 request.scope[SCOPE_AUTH_PATH] = True
-                request.scope[SCOPE_USER_PATH] = user_obj
+                request.scope[SCOPE_USER_PATH] = user
 
     return await call_next(request)

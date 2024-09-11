@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel as BaseSchema, Field
 
 from utils.constants import (PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH,
@@ -16,3 +18,12 @@ class UserBase(BaseSchema):
 
 class UserCreate(UserBase):
     pass
+
+
+class UserDB(UserBase):
+    id: int
+    media_id: str
+    created_at: datetime
+    active: bool
+
+    model_config = {'from_attributes': True}

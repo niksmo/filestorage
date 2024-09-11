@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, UploadFile, status
 from fastapi.responses import RedirectResponse
+from fastapi_cache.decorator import cache
 
 from api.depends import UserType, DatabaseType
 from schemas.file import File as FileSchema, UserFiles
@@ -21,8 +22,8 @@ QueryPathOrIdType = Annotated[str, Query(alias='path',
 @files_router.get('',
                   status_code=status.HTTP_200_OK,
                   response_model=UserFiles)
-async def user_files(user: UserType,
-                     db: DatabaseType):
+@cache(expire=60)
+async def user_files(user: UserType, db: DatabaseType):
     return await file_crud.user_files(db, user=user)
 
 
@@ -37,6 +38,7 @@ async def upload_file(path: FormPathType,
 
 
 @files_router.get('/download', response_class=RedirectResponse)
+@cache(expire=60)
 async def download_file(path_or_id: QueryPathOrIdType,
                         user: UserType,
                         db: DatabaseType):

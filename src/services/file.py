@@ -11,8 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core import app_settings
 from models.file import File as FileModel
-from models.user import User as UserModel
 from schemas.file import File, FileCreate, UserFiles
+from schemas.user import UserDB
 from utils.constants import CHUNK_1MB
 from .base import RepositoryDB
 
@@ -34,7 +34,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
             path = path / filename
         return filename, path
 
-    def _get_upload_path(self, path: Path, user: UserModel) -> Path:
+    def _get_upload_path(self, path: Path, user: UserDB) -> Path:
         return app_settings.media_root.joinpath(user.media_id, path)
 
     async def _create_dirs(self, upload_path: Path) -> None:
@@ -42,7 +42,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
         await aiofiles_makedirs(str(path_dir), exist_ok=True)
 
     async def user_files(self, db: AsyncSession, *,
-                         user: UserModel) -> UserFiles:
+                         user: UserDB) -> UserFiles:
         results = await self.get_multi(db, user_id=user.id)
         files = [File.model_validate(result) for result in results]
         return UserFiles(account_id=user.id, files=files)
@@ -50,7 +50,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
     async def upload(self, db: AsyncSession, *,
                      raw_path: str,
                      file: UploadFile,
-                     user: UserModel) -> FileModel:
+                     user: UserDB) -> FileModel:
         filename, path = self._get_path_and_filename(raw_path, file)
         upload_path = self._get_upload_path(path, user)
 
@@ -82,7 +82,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, Any]):
 
     async def download(self, db: AsyncSession, *,
                        path_or_id: str,
-                       user: UserModel) -> str:
+                       user: UserDB) -> str:
         path = Path(path_or_id)
         if not path.is_absolute():
             path = f'/{path}'
