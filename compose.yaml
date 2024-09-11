@@ -1,13 +1,18 @@
 name: file_storage
 
 networks:
-  net:
-    name: file_storage_net
+  net-pg:
+    name: file_storage_net_pg
+    driver: bridge
+  net-cache:
+    name: file_storage_net_cache
     driver: bridge
 
 volumes:
   pg-data:
     name: file_storage_pg-data
+  cache-data:
+    name: file_storage_cache-data
 
 services:
   pg:
@@ -19,6 +24,18 @@ services:
     volumes:
       - pg-data:/var/lib/postgresql/data
     networks:
-      - net
+      - net-pg
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready || exit 1" ]
+
+  cache:
+    image: redis:7.2.4-alpine
+    container_name: file_storage_cache
+    ports:
+      - 127.0.0.1:6379:6379
+    volumes:
+      - cache-data:/data
+    networks:
+      - net-cache
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli", "--raw", "incr", "ping" ]

@@ -10,6 +10,7 @@ from utils.constants import TAG_AUTH, TAG_FILES, TAG_HEALTHCHECK
 
 app = FastAPI(
     title=app_settings.app_title,
+    lifespan=app_settings.app_lifespan,
     docs_url='/api/openapi',
     openapi_url='/api/openapi.json',
     default_response_class=ORJSONResponse,

@@ -2,12 +2,14 @@ from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
 from sqlalchemy import ScalarResult, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.depends import get_session
 from schemas.healthcheck import ServiceActiveTime
-from utils.constants import TAG_AUTH, TAG_FILES, TAG_HEALTHCHECK
+from utils.constants import TAG_AUTH, TAG_FILES, TAG_HEALTHCHECK, UNAVAILABLE
 from utils.make import make_json_response_example
 
 from .auth import auth_router
@@ -26,7 +28,8 @@ DatabaseType = Annotated[AsyncSession, Depends(get_session)]
                responses={
                    status.HTTP_503_SERVICE_UNAVAILABLE:
                    make_json_response_example(
-                       example=ServiceActiveTime(db=0).model_dump()
+                       example=ServiceActiveTime(
+                           db=UNAVAILABLE, cache=UNAVAILABLE).model_dump()
                    )
                },
                tags=[TAG_HEALTHCHECK])
@@ -35,8 +38,17 @@ async def service_active_time(db: DatabaseType):
         result: ScalarResult[timedelta] = await db.scalars(
             text('SELECT current_timestamp - pg_postmaster_start_time();')
         )
-    except ConnectionError:
-        db_uptime = 0.00
+    except Exception:
+        db_uptime = UNAVAILABLE
     else:
-        db_uptime = result.one().total_seconds()
-    return ServiceActiveTime(db=db_uptime)
+        db_uptime = int(result.one().total_seconds())
+
+    redis_backend: RedisBackend = FastAPICache.get_backend()
+    try:
+        info = await redis_backend.redis.info()
+    except Exception:
+        cache_uptime = UNAVAILABLE
+    else:
+        cache_uptime = info["uptime_in_seconds"]
+
+    return ServiceActiveTime(db=db_uptime, cache=cache_uptime)

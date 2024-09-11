@@ -2,4 +2,5 @@ from pydantic import BaseModel as BaseSchema, Field
 
 
 class ServiceActiveTime(BaseSchema):
-    db: float = Field(examples=[2.32])
+    db: int = Field(examples=[1753])
+    cache: int = Field(examples=[3472])
