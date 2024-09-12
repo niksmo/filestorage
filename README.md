@@ -1,4 +1,4 @@
-# Прокт развёрнут
+# Проeкт развёрнут
 
 https://file-storage.nks-tech.ru/
 
