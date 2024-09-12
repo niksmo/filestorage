@@ -1,6 +1,0 @@
-services:
-  api:
-    develop:
-      watch:
-        - action: rebuild
-          path: ./src
