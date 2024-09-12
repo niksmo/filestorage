@@ -1,3 +1,5 @@
+name: file_storage_dev
+
 include:
   - path:
       - compose.prod.yaml
