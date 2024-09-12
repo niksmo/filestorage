@@ -7,22 +7,24 @@ networks:
   net-pg:
     name: file_storage_pg
     driver: bridge
+  net-cache:
+    name: file_storaga_cache
+    driver: bridge
 
 volumes:
   pg-data:
     name: file_storage_pg-data
+  cache-data:
+    name: file_storaga_cache-data
   media:
     name: file_storage_media
 
 services:
   gateway:
+    image: nginx:1.27.1
     container_name: file_storage_gateway
-    build:
-      context: .
-      dockerfile: ./dockerization/dockerfile.gateway
-      args:
-        NGINX_VERSION: 1.27.1
     volumes:
+      - ./nginx.conf:/etc/nginx/templates/default.conf.template:ro
       - media:/var/www/media
     ports:
       - ${GATEWAY_HOST}:${GATEWAY_PORT}:80
@@ -30,6 +32,7 @@ services:
       - net-gateway
     depends_on:
       - api
+    restart: unless-stopped
 
   api:
     container_name: file_storage_api
@@ -38,22 +41,50 @@ services:
       dockerfile: ./dockerization/dockerfile.api
       args:
         PYTHON_VERSION: 3.9.20-alpine
-    env_file: .env.production
+    environment:
+      - DB_DSN=${DB_DSN}
+      - CACHE_DSN=${CACHE_DSN}
+      - MEDIA_URL=${MEDIA_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM}
+      - JWT_EXPIRES=${JWT_EXPIRES}
     volumes:
       - media:/app/media
     networks:
       - net-gateway
       - net-pg
+      - net-cache
     depends_on:
-      - pg
+      pg:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    restart: unless-stopped
 
   pg:
     image: postgres:16
     container_name: file_storage_pg
-    env_file: .env.production
+    environment:
+      - PGUSER=${PGUSER}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - pg-data:/var/lib/postgresql/data
     networks:
       - net-pg
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready || exit 1" ]
+      test: [ "CMD-SHELL", "pg_isready" ]
+    restart: unless-stopped
+
+  cache:
+    image: redis:7.2.4-alpine
+    container_name: file_storage_cache
+    volumes:
+      - cache-data:/data
+    networks:
+      - net-cache
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli", "--raw", "incr", "ping" ]
+    restart: unless-stopped

@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Query, UploadFile, status
-from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.responses import RedirectResponse
 from fastapi_cache.decorator import cache
 
 from api.depends import AuthUserIdType, DatabaseType
@@ -41,7 +41,9 @@ async def upload_file(path: FormPathType,
                                   user_id=user_id)
 
 
-@files_router.get('/download', response_class=FileResponse)
+@files_router.get('/download',
+                  status_code=status.HTTP_302_FOUND,
+                  response_class=RedirectResponse)
 @cache(expire=CACHE_60_S)
 async def download_file(path_or_id: QueryPathOrIdType,
                         user_id: AuthUserIdType,

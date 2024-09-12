@@ -20,7 +20,7 @@ services:
     container_name: file_storage_pg
     env_file: .env
     ports:
-      - 127.0.0.1:4000:5432
+      - 127.0.0.1:5432:5432
     volumes:
       - pg-data:/var/lib/postgresql/data
     networks:
