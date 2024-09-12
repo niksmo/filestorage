@@ -6,6 +6,20 @@ OpenAPI https://file-storage.nks-tech.ru/api/openapi
 
 ## Запуск для разработки
 
+Собрать и запустить контейнеры:
+
+```sh
+docker compose up -d
+```
+
+Применить миграции к базе данных:
+
+```sh
+docker exec file_storage_api alembic upgrade head
+```
+
+Включить `watch` за файлами в папке `src`:
+
 ```sh
 docker compose watch
 ```
